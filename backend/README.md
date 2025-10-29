@@ -1,177 +1,115 @@
-# Task 2: Local LLM Recipe Chatbot
+# Task 2: Local LLM Recipe Chatbot Backend
 
-This project implements a comprehensive recipe suggestion chatbot with both backend API and web interface. The system uses local large language model integration via Ollama and provides intelligent recipe recommendations based on user-provided ingredients.
+This is the FastAPI-based backend for the Local LLM Recipe Chatbot. It provides RESTful endpoints for recipe suggestions and general chat interactions using local LLM integration via Ollama.
 
 ## Overview
 
-The chatbot combines:
-- **Ingredient-based recipe matching** using fuzzy string similarity on a curated recipe dataset
-- **Local LLM integration** for generating detailed recipe instructions
-- **Conversational AI** for general queries and greetings
-- **Modern web interface** with responsive design
-
-## Features
-
-- **Smart Ingredient Detection**: Automatically identifies ingredient queries vs. general conversation
-- **Recipe Database**: Pre-trained on diverse culinary dataset with cuisine classification
-- **Local LLM**: Uses Ollama's Mistral model for recipe generation (runs entirely offline)
-- **Fallback Responses**: Graceful handling when LLM is unavailable
-- **Web Interface**: Modern chat UI resembling popular messaging applications
-- **API-First Design**: RESTful API for easy integration
+The backend features:
+- **Recipe Matching**: Fuzzy similarity search on a JSON recipe dataset
+- **LLM Integration**: Uses Ollama's Mistral model for recipe generation
+- **Dual Endpoints**: Separate endpoints for detailed recipes and unified chat
+- **CORS Support**: Enabled for frontend integration
+- **Error Handling**: Graceful fallbacks when LLM is unavailable
 
 ## Prerequisites
 
-### System Requirements
-- Python 3.8 or higher
-- Node.js 14+ (for frontend)
+- Python 3.8+
 - Ollama CLI installed
-
-### Model Requirements
 - Ollama Mistral model: `ollama pull mistral`
 
-## Installation and Setup
+## Installation
 
-### Backend Setup
-
-1. Navigate to the task2_chatbot directory:
+1. Navigate to the backend directory:
    ```bash
-   cd task2_chatbot
+   cd task2_chatbot/backend
    ```
 
 2. (Optional) Create and activate a virtual environment:
    ```bash
    python -m venv venv
-   venv\Scripts\activate  # On Windows
-   # source venv/bin/activate  # On macOS/Linux
+   venv\Scripts\activate  # Windows
+   # source venv/bin/activate  # macOS/Linux
    ```
 
-3. Install Python dependencies:
+3. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
 
-4. Install and configure Ollama:
+4. Start Ollama server:
    ```bash
-   # Download Ollama from https://ollama.ai/
-   ollama pull mistral
-   ollama serve  # Start Ollama server in background
+   ollama serve
    ```
 
-5. Start the backend server:
+5. Run the server:
    ```bash
-   unicorn app:app --reload
+   uvicorn app:app --reload
    ```
-   The API will be available at http://localhost:8000
-
-### Frontend Setup
-
-1. Navigate to the frontend directory:
-   ```bash
-   cd frontend
-   ```
-
-2. Install Node.js dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Start the React development server:
-   ```bash
-   npm start
-   ```
-   The interface will be available at http://localhost:3000
-
-## Usage
-
-### Web Interface
-1. Ensure both backend (port 8000) and frontend (port 3000) are running
-2. Open http://localhost:3000 in your browser
-3. Enter ingredients (e.g., "egg, onion") for recipe suggestions
-4. Ask general questions for conversational responses
-
-### API Usage
-Send POST requests to `http://localhost:8000/chat` with JSON payload:
-```json
-{
-  "query": "egg, onion"
-}
-```
-
-## Sample Interactions
-
-### Recipe Query
-**Input:** "egg, onion"  
-**Output:** "Try making Egg Curry. Ingredients: Eggs, onions, tomatoes, spices. Instructions: Sauté onions, add tomatoes and spices, crack eggs into the mixture and cook until done."
-
-### General Conversation
-**Input:** "Hello"  
-**Output:** "Hello! How can I help you today? Try entering some ingredients for recipe suggestions!"
+   API available at http://localhost:8000
 
 ## API Endpoints
 
-### POST /chat
-Main endpoint for chatbot interactions.
+### POST /get_recipe
+Returns detailed recipe information based on ingredients.
 
-**Request Body:**
+**Request:**
 ```json
 {
-  "query": "string"
+  "ingredients": "egg, onion, tomato"
 }
 ```
 
 **Response:**
 ```json
 {
-  "response": "string"
+  "best_cuisine": "greek",
+  "matched_ingredients": ["egg", "onion", "tomato"],
+  "similarity_score": 87,
+  "llm_recipe": "Full recipe description..."
+}
+```
+
+### POST /chat
+Unified endpoint for recipes and general chat.
+
+**Request:**
+```json
+{
+  "query": "egg, onion"  // or "Hello"
+}
+```
+
+**Response:**
+```json
+{
+  "response": "Recipe suggestion or chat reply..."
 }
 ```
 
 ## Testing
 
-### Backend API Tests (using curl)
+Use curl or Postman:
 
-1. **Recipe Suggestion**:
-   ```bash
-   curl -X POST http://localhost:8000/chat \
-     -H "Content-Type: application/json" \
-     -d '{"query": "egg, onion"}'
-   ```
+```bash
+# Recipe request
+curl -X POST http://localhost:8000/get_recipe \
+  -H "Content-Type: application/json" \
+  -d '{"ingredients": "egg, onion"}'
 
-2. **General Query**:
-   ```bash
-   curl -X POST http://localhost:8000/chat \
-     -H "Content-Type: application/json" \
-     -d '{"query": "Hello"}'
-   ```
-
-### Frontend Tests
-- Load http://localhost:3000 and verify interface renders
-- Test ingredient queries and general conversation
-- Verify responsive design on different screen sizes
-
-## Architecture
-
-- **Backend**: FastAPI server with CORS enabled
-- **Recipe Matching**: Fuzzy similarity search on JSON dataset
-- **LLM Integration**: Ollama for local model inference
-- **Frontend**: React with modern CSS (glassmorphism effects)
-- **Data**: Recipe dataset with ingredients and cuisine classification
+# Chat request
+curl -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{"query": "Hello"}'
+```
 
 ## Configuration
 
-- **Similarity Threshold**: Configurable in `find_best_match()` function
-- **LLM Model**: Change model name in Ollama calls (default: mistral)
-- **Ports**: Backend (8000), Frontend (3000) - configurable in respective code
+- **Model**: Change in Ollama calls (default: mistral)
+- **Similarity Threshold**: Adjustable in `find_best_match()`
+- **Ports**: Default 8000, configurable in uvicorn command
 
 ## Troubleshooting
 
-- **LLM Errors**: Ensure Ollama is running (`ollama serve`)
-- **Connection Issues**: Verify ports are available and services are started
-- **Frontend Not Loading**: Check Node.js version and npm install completion
-
-## Notes
-
-- All processing occurs locally - no external API calls required
-- Recipe suggestions improve with better ingredient matching
-- LLM provides creative recipe variations based on cuisine inspiration
-- System gracefully degrades when LLM is unavailable
+- Ensure Ollama is running for LLM features
+- Check ports are free
+- Verify train.json is present
